@@ -1,0 +1,12 @@
+﻿{
+  "description": "Template only. Add measured points for your camera; empty arrays disable geometry. Scene IDs come from scenes.json. Never invent pitch dimensions.",
+  "image_size": [640, 360],
+  "scenes": {
+    "0": {
+      "pitch_polygon": [],
+      "image_points": [],
+      "pitch_points_m": [],
+      "max_reprojection_rmse_px": 5.0
+    }
+  }
+}

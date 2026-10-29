@@ -1,6 +1,64 @@
-﻿# Halı Saha Analytics — v0.2
+# Halı Saha Analytics — v0.2
 
 Python football video analytics for fixed sideline and fixed corner cameras. Uses the existing COCO YOLO model; no new model has been trained. Person detections are not guaranteed to be players (referees and spectators may appear).
+
+## v0.3: scene-aware ball tracking
+
+Development continues on `feature/tracking-v02`; versions are recorded in commit messages rather than creating a new branch per version. The v0.2 checkpoint is commit `da4c260` and has been pushed to origin. `baseline_tracking.py` remains the original v0.1 implementation.
+
+```powershell
+python run_tracking.py --video ilk_15_saniye.mp4 --output results/v03_short
+# Broad validation across the long montage: every third source frame, smaller inference size.
+python run_tracking.py --video halisaha.mp4 --output results/v03_long_sampled --stride 3 --imgsz 640
+# Restore the v0.2 ball filter for comparison (no scene resets in this mode).
+python run_tracking.py --video ilk_15_saniye.mp4 --output results/v02_comparison --ball-mode v02
+python -m unittest -v test_tracking_helpers test_pitch_tracking
+# Replay the old ball filter over the exact saved proposals; no extra YOLO inference.
+python compare_ball_filters.py --video ilk_15_saniye.mp4 --output results/v03_short --review-region 165 126 180 139
+```
+
+`halisaha.mp4` is approximately 146.4 seconds / 4,388 frames and contains multiple fixed-camera clips with hard cuts and gradual transitions. It is not one calibrated camera view. Default scene analysis found nine segments. Thumbnail differences over a 30-frame window detect transitions; boundaries are approximate, not annotated cut locations. Very short shots, similar views, flashes and camera movement can defeat this heuristic. Tracker state resets at each detected boundary; IDs are local to a scene. Do not interpret a montage as one match or join identities across its cuts.
+
+For each segment, `pitch_context.py` samples 41 frames, trims transition margins and builds a median reference plus a white-reference mask. A candidate overlapping reference white pixels, with insufficient change from the reference, is marked `static_marking`. This catches isolated white spots that the old surrounding-ring cue missed and rechecks even previously confirmed hypotheses. Thresholds do not depend on whether the candidate itself moved. A real ball that looks different from the reference can remain stationary and be accepted, including over a marking. The white mask is an appearance cue, not a semantic reconstruction of pitch lines.
+
+`ball_tracking.py` chooses at most one observed ball per processed frame using confidence, foreground change and a bounded motion gate. It confirms after repeated observations, retains a hypothesis through short gaps and reacquires after expiry. A simple velocity estimate assists association; observation of a stopped ball clears prediction drift. No coordinates are emitted for unseen frames, and there is no physical 3D ball model. False clothing detections, fast motion, occlusion and tiny missed balls remain possible.
+
+This is **offline** processing: scene segmentation and reference construction inspect future frames from the same clip. It is not a causal/live tracker or an independent evaluation dataset. A ball occupying one position for most reference samples can become part of the background. Lighting changes, compression, foreground people and gradual transitions can weaken the reference test. A ball visually indistinguishable from a reference marking remains ambiguous; the filter cannot guarantee correct treatment of that case.
+
+### Additional options
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `--ball-mode` | pitch | New filter; `v02` retains the original temporal helper and unsplit video behavior |
+| `--background-samples` | 41 | Uniform reference samples per detected segment |
+| `--background-difference` | 30 | Per-pixel maximum channel difference, 0?255 scale |
+| `--foreground-min` | 0.25 | Minimum changed-pixel fraction to overcome the reference-white caution |
+| `--scene-threshold` | 23 | Mean thumbnail color change over the scene window |
+| `--scene-window` | 30 | Source frames in lagged scene comparison |
+| `--scene-min-frames` | 60 | Minimum segment length; tiny final segments are not split |
+| `--threads` | 1 | PyTorch CPU threads; configurable for the local machine |
+| `--camera-config` | absent | Optional JSON with per-scene ROI/calibration |
+
+Existing `--ball-hits`, `--ball-gap` and `--ball-radius` also configure the new filter. `--ball-movement` only applies to `--ball-mode v02`. The new foreground difference and white-reference thresholds are heuristics, not trained probabilities. Source FPS/resolution are preserved in the output video apart from stride-adjusted FPS. The long sampled validation uses about 9.99 output FPS and does not test every source-frame detection or continuity at full rate.
+
+### New/extended outputs
+
+- `ball_track.csv`: one row per processed frame: `frame,time_s,scene_id,ball_id,state,confidence,center_x,center_y`. `observed` means an accepted detection; `tentative` means confirmation is pending; `occluded` means an unexpired hypothesis without an accepted observation; `missing` means none remains. Non-observed rows have blank positions and confidence. `v02_multi_hypothesis` is a legacy-mode placeholder, not a selected ball.
+- `ball_candidates.csv`: all proposals with reasons (`accepted`, `static_marking`, `temporal_unconfirmed`, `motion_gate`, `alternative`, `outside_pitch`). Added scene, reference-white fraction, changed-pixel fraction and prediction innovation in pixels. `white_marking_cue` in pitch mode records the combined static-reference caution, whereas legacy mode retains its old ring cue. Rejected/alternative proposals have ball ID -1 unless selected pending confirmation; no assigned identity is implied.
+- `detections.csv`: original columns retained; appended `scene_id,pitch_x_m,pitch_y_m`. Metric columns are populated only for people when measured calibration is supplied. Ball metric positions are blank because an airborne ball is not on the pitch plane.
+- `id_changes.csv`: appended scene ID. Events never link across detected scene boundaries.
+- `scenes.json`: exclusive end/source-frame boundaries, calibration status and reprojection error; current runs also export the fitted homography when present.
+- `pitch_context/scene_XXX_background.png` and `scene_XXX_markings.png`: references for visual auditing.
+- `summary.json`: added raw ball candidate count, rejection/acceptance reason counts and scene count. Unique person IDs count distinct `(scene_id, track_id)` pairs, not actual individuals.
+- `comparison.json` and `v02_ball_replay.csv`: produced by `compare_ball_filters.py`; original v0.2 postprocessing on the exact saved candidates. This isolates ball filtering from detector changes, but is not an end-to-end v0.2 player-tracking rerun. The optional review rectangle counts proposal centers in an explicitly supplied scene/region; it is not a general accuracy score.
+
+### Camera calibration
+
+`calibration.py` accepts per-scene pixel polygons and optional image-to-pitch point pairs. Copy `configs/camera.example.json`, fill in actual image coordinates and corresponding measured pitch coordinates in meters, then pass `--camera-config your_camera.json`. The supplied template contains empty arrays, so it enables no ROI or metric conversion. There are no invented field dimensions or assumed corner correspondences.
+
+The file must match source `image_size: [width, height]`; scene keys must exist in `scenes.json`. A polygon needs at least three non-collinear points. Homography fitting needs at least four distinct paired non-collinear points. Finite/invertibility and pixel reprojection-RMSE checks reject invalid fits. Reprojection error is measured on the fitting points: four exact correspondences do not independently verify calibration. Use extra held-out pitch landmarks to validate metric measurements. Fitted matrices and optional input configuration are saved with outputs. Scene boundaries and thus scene keys can change with scene parameters or video edits.
+
+No real-world calibration has been validated on these clips because measured dimensions/correspondences were not provided. Lens-distortion correction, automatic field-line fitting, calibrated speed/distance/heatmaps and 3D ball reconstruction remain future work. An ROI can suppress off-pitch clutter but may exclude an airborne ball above the ground silhouette; configure conservatively.
 
 ## Environment and execution
 
@@ -8,13 +66,13 @@ Python 3.10–3.12 recommended. Install using `pip install -r requirements.txt` 
 
 ```powershell
 python baseline_tracking.py --video ilk_15_saniye.mp4 --output results/baseline_v01
-python run_tracking.py --video ilk_15_saniye.mp4 --output results/v02
+python run_tracking.py --video ilk_15_saniye.mp4 --output results/current_run
 python -m unittest -v test_tracking_helpers
 ```
 
-`baseline_tracking.py` preserves the original v0.1 script verbatim for reproducible comparisons. Existing `results/` outputs are not overwritten by the example validation commands. Output directories should be distinct per run.
+`baseline_tracking.py` preserves the original v0.1 script verbatim for reproducible comparisons. Use a fresh output directory for each run. Example directory names are illustrative; repeating a command with the same directory overwrites its output files.
 
-## Changes
+## v0.2 changes (historical behavior)
 
 - Retained YOLO person detection and persistent BoT-SORT/ByteTrack tracking, original CSV fields, video annotation and foot coordinates.
 - Ball detection now uses a separate inference pass with its own confidence threshold. This costs additional inference time but avoids discarding ball candidates because of player tracker initiation thresholds.
@@ -49,7 +107,7 @@ Run `python run_tracking.py --help` for all options.
 
 Use stride 1 for continuity. Larger strides alter association behavior; ball and ID gaps remain in source frames while the underlying player tracker advances per processed frame. Relaxing person confidence to the low tracker threshold can enable more second-stage recovery but increases candidate noise; tune on annotated data.
 
-## Outputs
+## Original v0.2 outputs (extended by v0.3 above)
 
 - `tracked.mp4`: annotations with confidence and class-specific ID. Ball IDs and person IDs occupy separate namespaces; use object type together with ID.
 - `detections.csv`: original frame/time/ID/class/confidence/box/foot columns plus `object_type` (`player` or `ball`) and `jersey_l/a/b`. Ball foot columns retain box-bottom coordinates for schema compatibility; they are not physical contact points. Untracked person IDs are -1.
@@ -81,3 +139,34 @@ Check Ultralytics and model weight license terms before redistribution or commer
 Baseline transition hints were computed after the run using the same `IDTransitions` helper and default gap/radius as v0.2. V0.2 had 396 raw ball proposals: 375 accepted, 19 withheld pending temporal confirmation and 2 withheld with the white-marking cue. These rejected proposals have not been ground-truth labeled. The lower ball threshold and separate inference path prevent attributing the count increase to temporal filtering alone. The ID counts and equal transition-hint counts do not establish improved player stability.
 
 Both video files were decoded end to end successfully. An annotated sample at frame 300 was visually checked; this is output inspection, not an accuracy evaluation. All five helper tests passed, Python compilation and CLI help succeeded, and `git diff --check` reported no whitespace errors. The baseline script was verified against the original tracked source. Outputs are in `results/baseline_v01/` and `results/v02/` (ignored by git). No training, commit or push was performed.
+
+## Iterating on separate scenes
+
+Prefer a selected short scene for everyday development; do not repeatedly infer over the full montage. The completed long sampled run has already produced reusable boundaries:
+
+```powershell
+# Export all original-resolution/FPS raw clips without YOLO inference.
+python split_scenes.py --video halisaha.mp4 --scenes results/v03_long_sampled/scenes.json --output results/new_scene_clips
+# Or export only selected scenes into a fresh folder.
+python split_scenes.py --video halisaha.mp4 --scenes results/v03_long_sampled/scenes.json --output results/selected_clips --scene-ids 0 6
+# Then analyze one raw clip, using a fresh output folder.
+python run_tracking.py --video results/scene_clips/scene_000.mp4 --output results/scene000_next
+```
+
+`--scenes` reuses boundaries; omitting it runs scene scanning without YOLO. `split_scenes.py` validates coverage, exports exact frame ranges, decodes every exported clip to verify counts and refuses to overwrite existing output files/manifest. Clips are re-encoded as mp4v and do not retain audio. Re-encoding can change detection results; compare algorithms on the same input. Source videos stay unchanged. Boundaries are heuristic, especially across dissolves.
+
+Completed exports: `results/scene_clips/scene_000.mp4` through `scene_008.mp4` (4,388 total raw frames), and annotated sampled clips under `results/v03_long_sampled/scene_clips/` (1,463 total frames). Both folders contain `manifest.json` for parent-scene/source-frame mapping. A raw clip local frame maps to `source_start_frame + frame`; in the sampled annotated clips use the recorded original first frame plus local frame ? original stride. New analysis of a raw clip typically starts again at scene ID 0. Analyze raw clips, not annotated review videos.
+
+## Completed v0.3 validation
+
+| Metric | Short, stride 1 / imgsz 960 | Long, stride 3 / imgsz 640 |
+| --- | ---: | ---: |
+| Source / processed frames | 450 / 450 | 4,388 / 1,463 |
+| Raw ball proposals | 396 | 280 |
+| v0.2 filter replay accepted rows, same proposals | 375 | 204 |
+| v0.3 accepted rows | 52 | 62 |
+| Static-reference marking rejections | 334 | 168 |
+| Scene-scoped unique person IDs | 80 | 438 |
+| Possible spatial ID transitions | 18 | 54 |
+
+17 unit tests passed. Both output videos and all exported clips decoded completely. These counts are not precision/recall or proof of identity stability. The reviewed white-spot region had 322 ? 0 accepted rows in the short run but 5 ? 2 in the long sampled run: box geometry/resolution can still let markings escape the current white-fraction threshold. A clothing false positive was visually confirmed at short frame 331. No reliable continuous-ball-tracking claim is made. Real measured camera calibration and labeled evaluation remain outstanding. See [the detailed Turkish validation report](reports/v03_validation.md) for decisions, per-scene results, examples and limits.
