@@ -1,0 +1,8 @@
+# Exact versions reported in the validated local environment. Not a complete transitive lock.
+# Usage: pip install -r requirements.txt -c constraints-tested.txt
+ultralytics==8.4.192
+opencv-python==5.0.0.93
+numpy==2.2.6
+pandas==2.3.3
+torch==2.14.1
+torchvision==0.29.2

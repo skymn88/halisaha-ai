@@ -1,4 +1,4 @@
-﻿"""Offline, per-shot background context for fixed-camera football footage."""
+"""Offline, per-shot background context for fixed-camera football footage."""
 from collections import deque
 from pathlib import Path
 import cv2
@@ -90,7 +90,11 @@ class PitchBackground:
             return dict(marking_fraction=0., foreground_fraction=0., static_marking=False)
         reference = self.background[b:d,a:c].astype(np.float32)
         current = image[b:d,a:c].astype(np.float32)
-        foreground = float((np.max(np.abs(current-reference),axis=2) > self.difference).mean())
-        marking = float(self.white[b:d,a:c].mean())
+        changed = np.max(np.abs(current-reference),axis=2) > self.difference
+        white = self.white[b:d,a:c]
+        ch,cw = changed.shape
+        core = (slice(ch//4,max(ch//4+1,(3*ch+3)//4)),slice(cw//4,max(cw//4+1,(3*cw+3)//4)))
+        foreground = float(max(changed.mean(),changed[core].mean()))
+        marking = float(max(white.mean(),white[core].mean()))
         return dict(marking_fraction=marking, foreground_fraction=foreground,
                     static_marking=marking >= .25 and foreground < self.foreground_min)

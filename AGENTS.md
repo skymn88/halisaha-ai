@@ -15,12 +15,18 @@ Long-term product goals:
 
 ## Current implementation
 
-The repository now contains v0.3 development code built on the v0.2 checkpoint `da4c260` (pushed to origin). Continue on `feature/tracking-v02`; use versioned commit messages instead of opening a branch for each version unless requested. Check the actual branch and working tree before starting new work. Existing uncommitted changes must be preserved.
+The repository contains v0.3.1 development built on v0.3 checkpoint `b4be422` (local commit), following v0.2 checkpoint `da4c260` (pushed to origin). Continue on `feature/tracking-v02`; use versioned commit messages instead of opening a branch for each version unless requested. Check the actual branch and working tree before starting new work. Existing uncommitted changes must be preserved.
 
 | File | Actual responsibility |
 | --- | --- |
 | `baseline_tracking.py` | Preserved v0.1 CLI: one YOLO tracking pass for people and sports balls; annotated video and original detection CSV. Keep as a comparison baseline. |
-| `run_tracking.py` | v0.3 CLI and orchestration, legacy `--ball-mode v02`, scene resets, player tracking, ball inference and extended exports. |
+| `run_tracking.py` | Online v0.3.1 orchestration: normalized raw cache, separate trackers, observations versus predictions, legacy ball mode and player-only mode. |
+| `detection_io.py` / `detector.py` | Detector-neutral records/original CSV transport and a replaceable Ultralytics adapter; one shared full-frame detection pass. |
+| `player_tracking.py` / `track_csv.py` | Person BoT-SORT/ByteTrack adapter and CSV-only replay without a required video or detector inference. |
+| `annotations.py` | Different rendering for observations, unassigned candidates and explicitly predicted labels. |
+| `ball_detection.py` | Optional tiled/ROI experiment; disabled by default because no ROI recall gain was measured on the current clip. |
+| `test_detection_tracking.py` | CSV, weak-observation recovery, visibility/prediction, foot filtering and ball reacquisition regressions. |
+| `constraints-tested.txt` | Exact reported local direct/runtime versions; not a full transitive dependency lock. |
 | `ball_tracking.py` | One observed-ball selection, reference/ROI checks, motion gate, confirmation and gap expiry. |
 | `split_scenes.py` | Validated raw clip export using saved or detected scene boundaries, source-frame manifest, no-overwrite and decoded-frame checks; no YOLO inference. |
 | `test_split_scenes.py` | Clip boundary/source mapping and no-overwrite/invalid-manifest regressions. |
@@ -40,7 +46,7 @@ Local test assets include `ilk_15_saniye.mp4`, `halisaha.mp4` and `yolo11n.pt`. 
 
 1. Scan source frames for hard cuts and gradual transitions using lagged thumbnail change. Default pitch mode builds separate offline median backgrounds and white-reference masks for detected segments. These use future frames, not causal/live state. `--ball-mode v02` skips scene analysis and retains the legacy filter.
 2. Load optional per-scene ROI/measured calibration. With no measured configuration, metric columns remain blank; no field dimensions are assumed.
-3. Retain persistent YOLO person tracking and separate `sports ball` inference. Existing confidence/tracker settings remain configurable; CPU thread count is configurable (default 1).
+3. Use a replaceable detector to write pre-association normalized observations, then run person tracking and separate ball postprocessing. Person detector floor is 0.10, with strong/unassigned display threshold 0.25. One full-frame inference handles both classes. Existing confidence/tracker settings remain configurable; CPU thread count is configurable (default 1).
 4. In pitch mode, suppress candidates that match reference-white areas without sufficient foreground change, even if previously confirmed. Rank other candidates by confidence, foreground evidence and bounded velocity-based association. Accept at most one observed ball per processed frame after repeated observations. Stationary balls can pass when distinguishable from the reference. Preserve original `TemporalBall` behavior in legacy mode.
 5. Reset ball/player tracker state and ID diagnostics on scene boundaries. IDs are local to each scene; count identities by `(scene_id, track_id)`.
 6. Export video, observations, candidate decisions, per-frame ball states, scene/reference diagnostics and summary. No predicted coordinates fill unseen frames. Team features and player-ID hints remain diagnostics, not identities/team assignments.
@@ -146,3 +152,23 @@ Keep implementation incremental. Do not mark a milestone complete merely because
 See `reports/v03_validation.md` for detailed evidence. Short run: 396 proposals, 52 accepted ball rows versus 375 for replayed v0.2, 80 person IDs, 18 possible transitions, 450 decoded frames. Long sampled run: stride 3/imgsz 640, 280 proposals, 62 accepted rows versus 204 for replayed v0.2, 438 scene-scoped person IDs, 54 possible transitions and 1,463 decoded frames from 4,388 source frames. Seventeen tests passed. Nine raw clips and nine annotated sampled clips were exported and decoded successfully.
 
 Do not overstate these results: the reviewed white-spot region improved from 322 accepted rows to 0 in the short run, but still had 2 accepts versus 5 in the differently configured long run. A white-reference fraction below the threshold can let markings escape. Foreground clothing and motion association also caused a visually confirmed error at short frame 331. These are concrete regressions to address using selected clips; counts alone do not establish ball accuracy.
+
+## User-agreed direction and this iteration
+
+- Both ball and person improvements are important now; the user explicitly clarified this after proposing a player-statistics-first product milestone. Do not silently remove ball work or make ball a prerequisite for player statistics.
+- The user approved the bounded architecture step: canonical raw CSV plus the same player tracker replayed without YOLO. Do not expand this approval into a wholesale rewrite, metric tracker, team engine or model training. Discuss a short plan before major architectural changes.
+- External detection CSVs and representative frames are a first-class workflow. Do not require videos or rerun detectors merely to tune association. Preserve the original eleven leading CSV fields, ignore imported track IDs when retracking, and retain metadata for empty frames/FPS/stride/scene boundaries. Parquet is future work.
+- Person label losses have at least two evidenced causes: the old 0.25 detector floor removed weak recovery observations, and the original tracking callback could hide unassigned/unconfirmed strong observations. Keep these cases distinct from no detector observation. Use `P?` for real unassigned observations and dashed `predicted` labels for bounded estimates; predictions never become observation rows.
+- Cameras are usually fixed but location, height, lens and pitch vary. Use video/scene-specific measured calibration and configured dimensions; never silently assume 25?40 m, one camera angle or a fixed team palette. Foot-point pitch filtering now precedes player association. Lens correction remains future work.
+- Known 5v5?7v7 roster sizes and jersey colors can inform future association; no top-k player cap, goalkeeper classification, team assignment or jersey-number OCR exists yet.
+- Persistent identities, offline forward/backward tracklet merging and meter-space speed gating are future work. Validate calibration with held-out landmarks and a measured walking test before claiming real distance/speed accuracy. No distance, speed or heatmap product is implemented in this iteration.
+- Evaluate annotated clips per angle using IDF1/HOTA when identities are available; current counts/transition hints do not substitute for those metrics. Do not claim true ball recall from accepted proposal counts.
+- Keep a future multi-frame ball model independent of the player pipeline. Current crop-search experiments are opt-in, not a proven recall improvement; do not enable costly full-montage searches by default.
+- Keep dependency compatibility; use the optional tested-version constraints when reproducing this environment. A project LICENSE is not selected: do not assign one without the owner's decision or imply the detector adapter changes dependency licenses.
+- This turn authorizes the v0.3 checkpoint commit and a tested algorithm/cache improvement commit on the existing branch. Do not infer a new push request from a commit request.
+
+## v0.3.1 validation checkpoint
+
+31 tests passed. On the same 450-frame input and identical person cache, strict 0.25-floor replay gives 6,146 associated rows / 80 IDs / 18 spatial transition hints; the 0.10 weak-recovery path gives 6,446 associated rows / 75 IDs / 11 hints, plus 402 unassigned observations and 93 separate predicted labels. Online and CSV-only replay match all original eleven columns for all 6,848 person observation rows. These are not ground-truth identity metrics. The original schema is supported; Parquet is explicitly not implemented.
+
+The same 396 ball candidates yield 52 accepted observations under checkpoint b4be422 and 54 under the new filter. Frames 333?334 recover the visible ball, but the known clothing/footwear error at 331?332 remains. Many missed proposals remain unsolved. The long montage was not reinferred: only cached failure frames 78/81 were reviewed, and the new central-white test rejects those two static markings. Tiled/ROI experiments did not justify their cost on this clip and are disabled by default. See reports/v031_validation.md; final outputs are under results/v031_final, with CSV-only replay under results/v031_final_csv.

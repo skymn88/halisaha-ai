@@ -11,6 +11,11 @@ class SceneGeometry:
         self.polygon = np.asarray(polygon, dtype=np.float32).reshape(-1,2)
         if len(self.polygon) and (len(self.polygon) < 3 or not np.isfinite(self.polygon).all() or abs(cv2.contourArea(self.polygon)) < 1):
             raise ValueError('pitch_polygon must contain at least three finite non-collinear image points')
+        self.pitch_size_m = config.get('pitch_size_m')
+        if self.pitch_size_m is not None:
+            size = np.asarray(self.pitch_size_m,dtype=float)
+            if size.shape!=(2,) or not np.isfinite(size).all() or (size<=0).any():
+                raise ValueError('pitch_size_m must be [width, length] with finite positive values')
         self.homography = None
         self.reprojection_rmse_px = None
         image = np.asarray(config.get('image_points', []),dtype=np.float64).reshape(-1,2)
@@ -34,6 +39,13 @@ class SceneGeometry:
             if not np.isfinite(self.reprojection_rmse_px) or self.reprojection_rmse_px > limit:
                 raise ValueError('Calibration reprojection error exceeds configured limit')
             self.homography = h
+            if not len(self.polygon) and self.pitch_size_m is not None:
+                width,length = self.pitch_size_m
+                corners = np.array([[[0,0],[width,0],[width,length],[0,length]]],dtype=np.float64)
+                polygon = cv2.perspectiveTransform(corners,inverse)[0]
+                if not np.isfinite(polygon).all() or abs(cv2.contourArea(polygon.astype(np.float32)))<1:
+                    raise ValueError('Pitch dimensions and homography yield an invalid image polygon')
+                self.polygon = polygon.astype(np.float32)
 
     def contains(self, point):
         return not len(self.polygon) or cv2.pointPolygonTest(self.polygon,tuple(map(float,point)),False) >= 0

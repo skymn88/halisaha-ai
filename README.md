@@ -1,8 +1,61 @@
-# Halı Saha Analytics — v0.2
+# Hal? Saha Analytics - v0.3.1
 
 Python football video analytics for fixed sideline and fixed corner cameras. Uses the existing COCO YOLO model; no new model has been trained. Person detections are not guaranteed to be players (referees and spectators may appear).
 
-## v0.3: scene-aware ball tracking
+## Latest iteration: detector cache and label-loss fixes
+
+The v0.3 checkpoint is commit `b4be422`, on the existing `feature/tracking-v02` branch. This iteration keeps both player and ball work in scope, following the user's clarification, while preparing player statistics as the first product milestone. Long montage inference is not a routine development step: use short clips, provided CSVs and selected regression frames.
+
+```powershell
+# Online: one full-frame detection pass, then independent trackers and diagnostic exports.
+python run_tracking.py --video ilk_15_saniye.mp4 --output results/new_online
+# No model or video needed: replay the saved raw person observations.
+python track_csv.py --detections results/new_online/raw_detections.csv --output results/new_replay
+# Controlled old-confidence comparison, using exactly the same detections.
+python track_csv.py --detections results/new_online/raw_detections.csv --output results/new_strict --person-floor 0.25 --hold-frames 0
+# External original-schema CSV: declare FPS; provide frame count to preserve trailing empty frames.
+python track_csv.py --detections provided.csv --fps 30 --frame-count 450 --output results/external_replay
+# Player-only operation remains available without invoking ball detection.
+python run_tracking.py --video results/scene_clips/scene_000.mp4 --ball-mode off --output results/player_only
+```
+
+`detector.py` wraps Ultralytics behind normalized `Detection` records in `detection_io.py`. Full-frame person/ball detection now shares one inference pass, followed by separate thresholds and tracking. `player_tracking.py` accepts normalized observations from any detector and adapts them to the existing BoT-SORT/ByteTrack backend. This is pixel-space tracking; it does not implement metric speed gating, persistent physical identities or offline tracklet merging yet. The detector/tracker adapter separation does not select a project license or remove dependency licensing considerations.
+
+### Why person labels disappeared
+
+The earlier person detector floor (0.25) prevented observations in the tracker's low-score recovery interval (0.10?0.25) from reaching it. Ultralytics' tracking callback also retains only associated tracks when tracks exist and can hide unconfirmed new tracks. The new adapter receives weak observations and shows unmatched strong observations as `P?` with ID -1 rather than hiding them or inventing identities. `--conf` remains the strong/unassigned display threshold (default 0.25); `--person-det-conf` is the raw floor (default 0.10). Tracker initiation/high/low thresholds remain separate configurable options. More observations do not prove more correct identities.
+
+`--label-hold 3` shows a short, explicitly **predicted** dashed gray label when an existing track loses observations; 0 disables it. Predictions never enter `detections.csv`. Their confidence is blank and their source-frame age is exported in `track_states.csv`; exclude them from measurement by default. Predictions can drift or belong to an incorrect identity. A longer tracker buffer alone does not make a person visible through an occlusion.
+
+When per-video geometry is supplied, person filtering uses the bbox foot point before association. An explicit image polygon works without metric calibration. If measured homography correspondences and `pitch_size_m: [width, length]` are provided, the image pitch quadrilateral can instead be derived from the homography. No 25?40 assumption or camera-specific polygon is enabled by default. Fitting a transform still does not independently validate physical distances or speeds.
+
+### Cache and CSV-only replay contract
+
+- `raw_detections.csv`: first eleven original CSV columns retained, with `track_id=-1`, plus `scene_id,detector_pass`. Full-precision model scores/boxes are preserved for replay. These are post-NMS observations, before player association or ball acceptance. Person observations rejected by a configured pitch filter remain visible here for audit.
+- `raw_detections.meta.json`: FPS, source frame count/size, stride, source path, scene boundaries and detector floors. Empty frames and scene changes can therefore be replayed even when no rows exist for them.
+- `player_diagnostics.csv`: raw observations, pitch exclusions, associations, weak associations, unassigned observations and short predictions for each processed frame.
+- `detections.csv`: original leading columns and previous extensions retained; `tracking_state` distinguishes `observed` from `detected_unassigned`. Person ID -1 is not an identity.
+- `track_states.csv`: person observed/unassigned/predicted states and ball predictions. Observed ball states remain in `ball_track.csv`, with accepted boxes in `detections.csv`. `BALL?` denotes a current provisional candidate, whose box/reason is in `ball_candidates.csv`; it is not an accepted ball row.
+
+`track_csv.py` reads original eleven-column or extended CSV and optional metadata; incoming track IDs are ignored. Without metadata, FPS must be declared. Inferred frame ranges cannot recover omitted trailing empty frames; pass `--frame-count` where known. External CSV may already contain filtered/tracked data: replay cannot reconstruct discarded observations. CSV requires canonical `person`/`player` labels for person rows. Parquet is planned and is not currently supported.
+
+The CSV-only path does not load YOLO weights. It currently replays people only; ball filtering still requires image/reference evidence. Optional `--video` produces a person review video and torso descriptors; it must be the matching raw input, with the same resolution/frame numbering, not an annotated video. `--camera-config` plus metadata or `--image-size WIDTH HEIGHT` enables video-free geometry filtering. A cached `camera_config.json` is reused automatically. The saved tracker configuration is reused; explicit tracker arguments override it. Replay requires fixed-camera GMC disabled and appearance ReID disabled. No team features can be reconstructed from coordinates alone without descriptors or representative images.
+
+### Ball changes and limits
+
+Competing tentative ball hypotheses now survive the current active hypothesis's motion gate. A consistent challenger can take over after repeated observations, rather than being permanently rejected. Association also considers distance to the last observation, limiting overshoot when a ball stops or turns. Body/foot overlap is a soft ranking penalty, not an unconditional exclusion zone. The white-reference test examines the central crop as well as the whole bbox to avoid diluting a small penalty spot inside a padded box. The exported marking/foreground fractions in this version are the maximum of the whole-box and central-crop fractions; do not reinterpret historical v0.3 values with this definition.
+
+Optional `--ball-search` enables periodic tile acquisition and up to two active/challenger ROIs using the same weights. It is **off by default**: on the current short clip an experimental 268 extra inference passes yielded no retained ROI detections, so no ROI recall improvement is claimed. Search is configurable with `--ball-search-interval`, `--ball-tile-fraction`, `--ball-roi-fraction` and `--ball-crop-imgsz`; a different camera may need a separately reviewed experiment. No moving-white-blob shortcut or new model training was introduced.
+
+The checked example still misselects clothing/footwear at frames 331?332, while the new association accepts the visible ball at 333?334 where v0.3 had no accepted observation. Many small balls still have no usable detector proposal. Accepted row counts are not true-ball recall. Reliable ball tracking will need annotated evaluation and potentially a separate temporal model; no such model is implemented or trained here.
+
+### Validation and environment
+
+31 tests passed, including CSV-only replay and input consistency checks. Online/CSV-only replay agreed in all original eleven columns for all 6,848 person rows; both the combined review video and CSV-rendered person video decoded to 450 frames. See [the v0.3.1 Turkish report](reports/v031_validation.md). The controlled cache replay changes person associated observations from 6,146 to 6,446, scene-scoped IDs from 80 to 75 and spatial transition hints from 18 to 11. The weak path accounts for 296 associated rows. There are no ground-truth identities, so IDF1/HOTA or accuracy improvement is not claimed. Predicted labels and unassigned detections are reported separately.
+
+`constraints-tested.txt` records exact installed direct/runtime versions for an optional constrained install (`pip install -r requirements.txt -c constraints-tested.txt`); it is not a complete transitive lock. The existing requirements remain unchanged. A project LICENSE decision is outstanding; no license was assigned on the owner's behalf. Team classification, Parquet, metric statistics and event recognition remain future milestones, with physical validation required before calling distances/speeds accurate.
+
+## v0.3 checkpoint: scene-aware ball tracking (historical)
 
 Development continues on `feature/tracking-v02`; versions are recorded in commit messages rather than creating a new branch per version. The v0.2 checkpoint is commit `da4c260` and has been pushed to origin. `baseline_tracking.py` remains the original v0.1 implementation.
 
