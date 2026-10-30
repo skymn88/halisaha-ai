@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Halı Saha — İnceleme</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101820;color:#e9eff5;font:15px system-ui}
+header{padding:16px 24px;background:#182633;border-bottom:1px solid #34495b}h1{font-size:21px;margin:0 0 6px}
+main{display:grid;grid-template-columns:minmax(500px,1fr) 360px;gap:18px;padding:18px}
+section,aside{background:#182633;border:1px solid #34495b;border-radius:8px;padding:14px}
+label{display:block;margin:9px 0}input,select,button,textarea{font:inherit;color:inherit;background:#253b4b;border:1px solid #5d7587;border-radius:4px;padding:7px;max-width:100%}
+button{cursor:pointer;margin:3px}button.primary{background:#16705a}button.danger{background:#733e41}
+canvas{display:block;width:100%;height:auto;background:#000;touch-action:none;border:1px solid #607080}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.hint{color:#aebfcd;font-size:13px;line-height:1.5}.warn{color:#ffcd80}
+#boxes{max-height:210px;overflow:auto}#boxes button{width:100%;text-align:left}
+textarea{width:100%}video{width:100%;max-height:230px}#message{white-space:pre-wrap;min-height:28px;padding:7px;color:#a8e1c5}
+.small{width:100px}hr{border:0;border-top:1px solid #34495b;margin:16px 0}
+@media(max-width:1000px){main{grid-template-columns:1fr}}
+</style>
+<header><h1>Halı Saha · İnsan incelemesi</h1>
+<div class="hint">Kutular öneridir. İncelenmeyen kareler negatif etiket değildir. Oyuncu kimliği ve takım boş bırakılabilir; takip numarası gerçek kimlik sayılmaz.</div></header>
+<main><section>
+<div class="row"><select id="window"></select><button id="prev">←</button><input id="frameNo" class="small" type="number"><button id="next">→</button><button id="play">Ham kareleri oynat</button><span id="scope" class="hint"></span></div>
+<input id="slider" type="range" style="width:100%;margin:12px 0">
+<canvas id="canvas"></canvas>
+<div class="row"><button id="modeSelect">Seç / taşı / sağ alt köşeden boyutlandır</button><button id="modeBall">Eksik top ekle</button><button id="modePlayer">Oyuncu kutusu çiz</button><button id="reject" class="danger">Seçili kutuyu reddet / geri al</button></div>
+<div class="hint">Top eklemek için merkeze tıkla. Oyuncu için sürükleyerek kutu çiz. Turuncu: top; yeşil: oyuncu; kırmızı kesikli: reddedilmiş öneri; mavi: seçili kutu.</div>
+<div id="message" role="status"></div>
+<hr><strong>Olay kanıtı · ham klip</strong><video id="clip" controls preload="metadata"></video>
+<div class="hint">Klip zamanı pencerenin başlangıcına göredir. Kesit dışında kalan bağlam bilinmez. Tarayıcı MP4V'yi desteklemiyorsa “Ham kareleri oynat” kullanılabilir; önizleme gerçek zaman hızını garanti etmez.</div>
+<button id="clipFrame">Klipteki zamanı kareye taşı</button>
+<label>Bu penceredeki öneriler <select id="candidate"><option value="">Yeni / sistemin önermediği olay</option></select></label>
+<label>Önceki olay incelemesini düzelt <select id="reviewedEvent"><option value="">Yeni inceleme</option></select></label>
+<div class="row"><select id="eventType"></select><select id="decision">
+<option value="approved">Onayla</option><option value="rejected">Reddet</option><option value="corrected">Tür / zaman düzeltildi</option>
+<option value="uncertain">Belirsiz bırak</option><option value="unevaluable">Değerlendirilemeyen aralık</option></select></div>
+<div class="row"><input id="actor" placeholder="Oyuncu / bilinmiyor" class="small"><input id="recipient" placeholder="Alıcı" class="small"><input id="eventTeam" placeholder="Takım" class="small"></div>
+<label>Tekrar görüntüsü ise önceki olay kimliği <input id="duplicate" placeholder="duplicate_of" list="eventIds"><datalist id="eventIds"></datalist></label>
+<div class="row"><label>Belirsiz aralık ilk kare <input id="intervalStart" type="number" class="small"></label><label>Son kare (hariç) <input id="intervalEnd" type="number" class="small"></label></div>
+<button id="saveEvent" class="primary">Seçili karede olay incelemesini kaydet</button>
+<button id="complete">Pencerenin tamamı olaylar için incelendi</button>
+<div id="reviews" class="hint"></div>
+</section><aside>
+<label>İnceleyen <input id="reviewer" placeholder="Ad / rumuz"></label>
+<label>Etiket kaynağı <select id="source"><option value="human">human · insan</option><option value="ai_reviewed">ai_reviewed · yapay zekâ</option></select></label>
+<label>Top durumu <select id="ballState"></select></label>
+<label><input id="peopleComplete" type="checkbox"> Bütün görünür kişi kutuları incelendi</label>
+<label><input id="idsComplete" type="checkbox"> Bu karede oyuncu kimlikleri tamam</label>
+<label><input id="reviewed" type="checkbox"> Bu kareyi inceledim</label>
+<div id="boxes"></div><hr><strong>Seçili kutu</strong><div id="selected" class="hint">Seçilmedi</div>
+<div class="row"><label>x1 <input id="x1" type="number" class="small"></label><label>y1 <input id="y1" type="number" class="small"></label></div>
+<div class="row"><label>x2 <input id="x2" type="number" class="small"></label><label>y2 <input id="y2" type="number" class="small"></label></div>
+<div class="row"><label>Merkez x <input id="center_x" type="number" class="small"></label><label>Merkez y <input id="center_y" type="number" class="small"></label></div>
+<label>Gerçek oyuncu kimliği <input id="identity"></label><label>Takım etiketi <input id="team"></label>
+<label>Rol <select id="role"><option>unknown</option><option>player</option><option>goalkeeper</option><option>referee</option><option>spectator</option></select></label>
+<label>Top hata grupları <select id="groups" multiple size="5"><option value="small_far">Küçük / uzak</option><option value="fast_blurred">Hızlı / bulanık</option><option value="on_line">Çizgi üzerinde</option><option value="person_overlap">Kişiyle örtüşen</option><option value="stationary">Duran top</option></select></label>
+<label>Reddedilmiş öneri türü <select id="fp"><option value="">Seçilmedi</option><option value="white_marking">Beyaz saha işareti</option><option value="clothing_footwear">Kıyafet / ayakkabı</option><option value="other">Diğer</option><option value="unknown">Belirsiz</option></select></label>
+<label>Not <textarea id="notes" rows="3"></textarea></label>
+<button id="save" class="primary">Kare etiketlerini kaydet</button>
+<div class="hint warn">Görünür top durumunda yalnız bir kabul edilmiş top kutusu bırak. “Kimlikler tamam” işaretlenirse her oyuncunun farklı bir kimliği olmalı. AI etiketleri doğruluk hesabına girmez. Olay onayı, kare bazında top etiketi üretmez.</div>
+</aside></main>
+<script>
+const $=id=>document.getElementById(id), ctx=$('canvas').getContext('2d');
+let dataset,current,rows=[],selected=-1,mode='select',drag=null,image=null,dirty=false,events=null,playing=false;
+const states={visible:'Görünür',partially_occluded:'Kısmen örtülü',fully_occluded:'Tamamen örtülü',out_of_frame:'Kare dışında',uncertain:'Belirsiz',unreviewed:'İncelenmedi'};
+const types={pass_completed:'Tamamlanan pas',pass_attempt:'Pas girişimi',shot_candidate:'Şut adayı · insan onayı gerekli',shot:'Şut',control_change:'Kontrol değişimi',ball_recovery:'Top kazanma',unknown:'Belirsiz olay'};
+for(const [value,text] of Object.entries(states))$('ballState').add(new Option(text,value));
+for(const [value,text] of Object.entries(types))$('eventType').add(new Option(text,value));
+function msg(s){$('message').textContent=s}
+async function api(path,data){const res=await fetch(path,data?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{});const out=await res.json();if(!res.ok)throw Error(out.error);return out}
+function win(){return dataset.windows.find(w=>w.window_id===$('window').value)}
+function point(e){const r=$('canvas').getBoundingClientRect();return [Math.max(0,Math.min($('canvas').width,(e.clientX-r.left)*$('canvas').width/r.width)),Math.max(0,Math.min($('canvas').height,(e.clientY-r.top)*$('canvas').height/r.height))]}
+function draw(){if(!image)return;ctx.drawImage(image,0,0);rows.forEach((r,i)=>{ctx.strokeStyle=i===selected?'#58c7ff':r.decision==='rejected'?'#ff7575':r.object_type==='ball'?'#ffba65':'#6ded9b';ctx.lineWidth=i===selected?2:1;ctx.setLineDash(r.decision==='rejected'?[5,3]:[]);ctx.strokeRect(+r.x1,+r.y1,r.x2-r.x1,r.y2-r.y1);ctx.fillStyle=ctx.strokeStyle;ctx.font='11px sans-serif';ctx.fillText(r.object_type==='ball'?'TOP':(r.identity_id||('P? '+(r.track_hint||''))),+r.x1,Math.max(11,r.y1-2))});ctx.setLineDash([])}
+function list(){const box=$('boxes');box.replaceChildren();rows.forEach((r,i)=>{const b=document.createElement('button');b.textContent=(i===selected?'→ ':'')+r.object_type+' '+r.decision+(r.score?' '+Number(r.score).toFixed(2):'');b.onclick=()=>select(i);box.append(b)})}
+function select(i){selected=i;const r=rows[i];$('selected').textContent=r?r.annotation_id+' · öneri takip kimliği: '+(r.track_hint||'yok'):'Seçilmedi';if(r){for(const k of ['x1','y1','x2','y2','center_x','center_y'])$(k).value=Number(r[k]).toFixed(2);$('identity').value=r.identity_id||'';$('team').value=r.team_id||'';$('role').value=r.role||'unknown';$('fp').value=r.fp_group||'';for(const o of $('groups').options)o.selected=(r.error_groups||'').split(';').includes(o.value)}list();draw()}
+function edit(){if(selected<0)return;const r=rows[selected];for(const k of ['x1','y1','x2','y2'])r[k]=Number($(k).value);r.center_x=(r.x1+r.x2)/2;r.center_y=(r.y1+r.y2)/2;r.identity_id=$('identity').value;r.team_id=$('team').value;r.role=$('role').value;r.fp_group=$('fp').value;r.error_groups=Array.from($('groups').selectedOptions).map(o=>o.value).join(';');dirty=true;draw()}
+for(const id of ['x1','y1','x2','y2','identity','team','role','fp','groups'])$(id).onchange=edit;
+for(const k of ['center_x','center_y'])$(k).onchange=()=>{if(selected>=0){rows[selected][k]=Number($(k).value);dirty=true}};
+async function load(frame,force=false){if(dirty&&!force&&!confirm('Kaydedilmemiş değişiklikler var. Bu kareden ayrıl?')){$('frameNo').value=current.frame.frame;$('slider').value=current.frame.frame;return}const w=win();frame=Math.max(w.start_frame,Math.min(w.end_frame-1,frame));current=await api('/api/frame?window='+w.window_id+'&frame='+frame);rows=current.detections;selected=-1;dirty=false;$('frameNo').value=frame;$('slider').min=w.start_frame;$('slider').max=w.end_frame-1;$('slider').value=frame;$('scope').textContent=w.angle+' · '+w.split+' · '+w.selection+' · '+(frame/current.source.fps).toFixed(2)+' s';$('ballState').value=current.frame.ball_state;$('peopleComplete').checked=Number(current.frame.people_complete)===1;$('idsComplete').checked=Number(current.frame.identities_complete)===1;$('reviewed').checked=current.frame.review_status==='reviewed';$('notes').value=current.frame.notes||'';image=new Image();await new Promise((resolve,reject)=>{image.onload=()=>{$('canvas').width=image.width;$('canvas').height=image.height;select(-1);resolve()};image.onerror=()=>reject(Error('Ham kare yüklenemedi'));image.src='/image?window='+w.window_id+'&frame='+frame});msg('');}
+function newBox(x1,y1,x2,y2,type){rows.push({annotation_id:'manual_'+crypto.randomUUID(),object_type:type,decision:'accepted',x1,y1,x2,y2,center_x:(x1+x2)/2,center_y:(y1+y2)/2,proposal_id:'',identity_id:'',team_id:'',role:'unknown',error_groups:'',fp_group:''});dirty=true;select(rows.length-1)}
+$('canvas').onpointerdown=e=>{e.preventDefault();$('canvas').setPointerCapture(e.pointerId);const [x,y]=point(e);if(mode==='ball'){newBox(Math.max(0,x-4),Math.max(0,y-4),Math.min(image.width,x+4),Math.min(image.height,y+4),'ball');rows[selected].center_x=x;rows[selected].center_y=y;select(selected);return}if(mode==='player'){drag={x,y,newBox:true};return}let hit=-1;for(let i=rows.length-1;i>=0;i--){let r=rows[i];if(x>=r.x1&&x<=r.x2&&y>=r.y1&&y<=r.y2){hit=i;break}}select(hit);if(hit>=0){const r=rows[hit];drag={x,y,original:{...r},resize:Math.abs(x-r.x2)<10&&Math.abs(y-r.y2)<10}}};
+$('canvas').onpointermove=e=>{if(!drag||drag.newBox||selected<0)return;const [x,y]=point(e),r=rows[selected],o=drag.original;if(drag.resize){r.x2=Math.max(+o.x1+1,x);r.y2=Math.max(+o.y1+1,y)}else{const dx=Math.max(-o.x1,Math.min(image.width-o.x2,x-drag.x)),dy=Math.max(-o.y1,Math.min(image.height-o.y2,y-drag.y));r.x1=+o.x1+dx;r.x2=+o.x2+dx;r.y1=+o.y1+dy;r.y2=+o.y2+dy}r.center_x=(+r.x1+ +r.x2)/2;r.center_y=(+r.y1+ +r.y2)/2;dirty=true;draw()};
+$('canvas').onpointerup=e=>{if(drag?.newBox){const [x,y]=point(e);if(Math.abs(x-drag.x)>1&&Math.abs(y-drag.y)>1)newBox(Math.min(x,drag.x),Math.min(y,drag.y),Math.max(x,drag.x),Math.max(y,drag.y),'player')}drag=null;select(selected)};
+for(const [id,m] of [['modeSelect','select'],['modeBall','ball'],['modePlayer','player']])$(id).onclick=()=>{mode=m;msg('Araç: '+m)};
+$('reject').onclick=()=>{if(selected>=0){rows[selected].decision=rows[selected].decision==='rejected'?'accepted':'rejected';dirty=true;select(selected)}};
+for(const id of ['ballState','peopleComplete','idsComplete','reviewed','notes'])$(id).onchange=()=>dirty=true;
+function who(){return {reviewer:$('reviewer').value,annotation_source:$('source').value,notes:$('notes').value}}
+$('save').onclick=async()=>{try{const r=await api('/api/save_frame',{window_id:win().window_id,frame:+$('frameNo').value,ball_state:$('ballState').value,reviewed:$('reviewed').checked,people_complete:$('peopleComplete').checked,identities_complete:$('idsComplete').checked,detections:rows,...who()});dirty=false;msg('Kaydedildi · '+r.revision_id)}catch(e){msg(e.message)}};
+$('prev').onclick=()=>load(+$('frameNo').value-1);$('next').onclick=()=>load(+$('frameNo').value+1);$('frameNo').onchange=()=>load(+$('frameNo').value);$('slider').onchange=()=>load(+$('slider').value);
+async function refreshEvents(){events=await api('/api/events');$('candidate').replaceChildren(new Option('Yeni / sistemin önermediği olay',''));for(const c of events.candidates.filter(c=>c.window_id===win().window_id))$('candidate').add(new Option(c.event_type+' · kare '+c.frame+' · '+(c.reason||''),c.candidate_id));$('reviewedEvent').replaceChildren(new Option('Yeni inceleme',''));$('eventIds').replaceChildren();for(const r of events.reviews){if(r.window_id===win().window_id)$('reviewedEvent').add(new Option(r.event_id+' · '+r.event_type+' · '+r.decision+' · kare '+r.frame,r.event_id));$('eventIds').append(new Option(r.event_type+' · '+r.window_id,r.event_id))}$('reviews').textContent='Bu pencerede '+events.reviews.filter(r=>r.window_id===win().window_id).length+' olay incelemesi var.';}
+$('reviewedEvent').onchange=async()=>{const r=events.reviews.find(r=>r.event_id===$('reviewedEvent').value);if(!r)return;$('candidate').value=r.candidate_id||'';$('eventType').value=r.event_type;$('decision').value=r.decision;$('actor').value=r.actor_id||'';$('recipient').value=r.recipient_id||'';$('eventTeam').value=r.team_id||'';$('duplicate').value=r.duplicate_of||'';$('intervalStart').value=r.interval_start_frame||'';$('intervalEnd').value=r.interval_end_frame||'';await load(+r.frame);$('notes').value=r.notes||''};
+$('candidate').onchange=()=>{const c=events.candidates.find(c=>c.candidate_id===$('candidate').value);if(c){$('eventType').value=c.event_type;$('actor').value=c.actor_id||'';$('recipient').value=c.recipient_id||'';$('eventTeam').value=c.team_id||'';load(+c.frame)}};
+$('clipFrame').onclick=()=>load(win().start_frame+Math.round($('clip').currentTime*current.source.fps));
+$('saveEvent').onclick=async()=>{try{const id=$('candidate').value,old=events.reviews.find(r=>r.candidate_id===id&&id);await api('/api/save_event',{event_id:$('reviewedEvent').value||old?.event_id||'',window_id:win().window_id,frame:+$('frameNo').value,event_type:$('eventType').value,decision:$('decision').value,actor_id:$('actor').value,recipient_id:$('recipient').value,team_id:$('eventTeam').value,candidate_id:id,duplicate_of:$('duplicate').value,interval_start_frame:$('intervalStart').value,interval_end_frame:$('intervalEnd').value,...who()});msg('Olay incelemesi kaydedildi. Kare etiketleri değişmedi.');await refreshEvents()}catch(e){msg(e.message)}};
+$('complete').onclick=async()=>{if(!confirm('Sistemin önermediği olaylar dahil pencerenin tamamını izledin mi?'))return;try{await api('/api/complete_window',{window_id:win().window_id,events_complete:true,...who()});msg('Olay kapsamı incelendi olarak kaydedildi.')}catch(e){msg(e.message)}};
+$('window').onchange=async()=>{if(dirty&&!confirm('Kaydedilmemiş değişiklikler var. Pencereden ayrıl?')){$('window').value=current.window.window_id;return}playing=false;const w=win();try{await load(w.start_frame,true);$('clip').src='/clip?window='+w.window_id;await refreshEvents()}catch(e){msg(e.message)}};
+$('play').onclick=async()=>{if(playing){playing=false;return}if(dirty&&!confirm('Kaydedilmemiş değişikliklerden vazgeçip oynat?'))return;playing=true;$('play').textContent='Durdur';try{while(playing&&+$('frameNo').value<win().end_frame-1){await load(+$('frameNo').value+1,true);await new Promise(resolve=>setTimeout(resolve,Math.max(35,1000/current.source.fps)))}}catch(e){msg(e.message)}finally{playing=false;$('play').textContent='Ham kareleri oynat'}};
+(async()=>{try{dataset=await api('/api/dataset');for(const w of dataset.windows)$('window').add(new Option(w.window_id+' · '+w.kind+' · '+w.angle+' · '+w.split,w.window_id));$('window').onchange()}catch(e){msg(e.message)}})();
+</script></html>

@@ -14,6 +14,13 @@ class PitchBallTracker:
         self.last_selected = None
 
     def update(self, frame, candidates, image, background, geometry=None, people=()):
+        """Compute image evidence, then run the same association used by CSV replay."""
+        from ball_cache import collect_evidence
+        self.last_evidence = collect_evidence(candidates, image, background, geometry, people)
+        return self.update_evidence(frame, self.last_evidence)
+
+    def update_evidence(self, frame, candidates):
+        """Associate cached image evidence; innovations are always recomputed."""
         self.hypotheses = [t for t in self.hypotheses if frame-t['frame']<=self.gap]
         previous = self.active
         if previous is not None and frame-previous['frame']>self.gap:
@@ -21,11 +28,12 @@ class PitchBallTracker:
         self.active = previous
         self.last_diagnostics,self.last_selected = [],None
         used,ranked = set(),[]
-        for box,confidence in sorted(candidates,key=lambda c:-c[1]):
+        for candidate in sorted(candidates,key=lambda c:-c['confidence']):
+            box,confidence = candidate['box'],candidate['confidence']
             center = (np.asarray(box[:2])+np.asarray(box[2:]))/2
-            evidence = background.evidence(image,box)
+            evidence = {key:candidate[key] for key in ('marking_fraction','foreground_fraction','static_marking')}
             status = 'candidate'
-            if geometry is not None and not geometry.contains(center):
+            if candidate['outside_pitch']:
                 status = 'outside_pitch'
             elif evidence['static_marking']:
                 status = 'static_marking'
@@ -63,8 +71,8 @@ class PitchBallTracker:
             required = max(self.hits,self.reacquire_hits) if t['reacquiring'] or challenger else self.hits
             confirmed = t['hits']>=required
             row['status'] = 'accepted' if confirmed else ('motion_gate' if t['reacquiring'] or challenger else 'temporal_unconfirmed')
-            body_overlap = any(p[0]<=center[0]<=p[2] and p[1]<=center[1]<=p[1]+.8*(p[3]-p[1]) for p in people)
-            person_overlap = any(p[0]<=center[0]<=p[2] and p[1]<=center[1]<=p[3] for p in people)
+            body_overlap = candidate['body_overlap']
+            person_overlap = candidate['person_overlap']
             rank = confidence+.35*evidence['foreground_fraction']-(.3 if body_overlap else .15 if person_overlap else 0)
             if previous is not None and previous['id']==t['id']:
                 rank += .15

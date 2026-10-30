@@ -87,7 +87,7 @@ Eski tracked CSV'den zaten atılmış tespitler geri getirilemez. Ham dosyadaki 
 
 ## Testler ve tamamlanmayan işler
 
-**29 test geçti.** Önceki 17 teste ek olarak CSV uyumluluğu/NaN reddi, videosuz tekrar oynatma, zayıf gözlemle ID korunması, atanmamış kişinin görünürlüğü, tahmin süresi, ayak poligonu, boyuttan saha dörtgeni, tutarlı yeni top hipotezi, kutu içinde seyrelmiş beyaz nokta, tile/NMS ve alternatif ROI davranışı test edildi. Sentetik projeksiyon testleri gerçek kamera kalibrasyonu doğrulaması değildir. Python derleme/CLI ve çıktı bütünlüğü kontrolleri yapıldı.
+**31 test geçti.** Önceki 17 teste ek olarak CSV uyumluluğu/NaN reddi, videosuz tekrar oynatma, zayıf gözlemle ID korunması, atanmamış kişinin görünürlüğü, tahmin süresi, ayak poligonu, boyuttan saha dörtgeni, tutarlı yeni top hipotezi, kutu içinde seyrelmiş beyaz nokta, tile/NMS ve alternatif ROI davranışı test edildi. Sentetik projeksiyon testleri gerçek kamera kalibrasyonu doğrulaması değildir. Python derleme/CLI ve çıktı bütünlüğü kontrolleri yapıldı.
 
 Değişen mevcut dosyalar: `run_tracking.py`, `ball_tracking.py`, `pitch_context.py`, `calibration.py`, `configs/camera.example.json`, `README.md`, `AGENTS.md`. Eklenenler: `detection_io.py`, `detector.py`, `player_tracking.py`, `track_csv.py`, `ball_detection.py`, `annotations.py`, `test_detection_tracking.py`, `constraints-tested.txt`, bu rapor. Önceki baseline ve `tracking_helpers.py` korunuyor. Bağımlılık kurulumu/güncellemesi yapılmadı; isteğe bağlı constraints dosyası kurulu ortamın bildirilen kesin sürümlerini kaydeder, tam transitif lock değildir.
 

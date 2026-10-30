@@ -13,6 +13,7 @@ from detector import YoloDetector
 from player_tracking import PlayerTracker
 from ball_detection import BallSearch
 from annotations import draw_object
+from ball_cache import FIELDS as EVIDENCE_FIELDS, evidence_row, write_metadata, sha256_file
 
 
 def main():
@@ -122,7 +123,7 @@ def main():
         print(f'Prepared {len(scenes)} scene(s); processing {scenes[-1]["end_frame"]} frames',flush=True)
         writer = cv2.VideoWriter(str(out/'tracked.mp4'),cv2.VideoWriter_fourcc(*'mp4v'),fps/args.stride,size)
         if not writer.isOpened(): raise RuntimeError('Video writer could not be opened')
-        with (out/'detections.csv').open('w',newline='',encoding='utf-8') as f, (out/'ball_candidates.csv').open('w',newline='',encoding='utf-8') as b, (out/'id_changes.csv').open('w',newline='',encoding='utf-8') as e, (out/'ball_track.csv').open('w',newline='',encoding='utf-8') as t, (out/'raw_detections.csv').open('w',newline='',encoding='utf-8') as rd, (out/'player_diagnostics.csv').open('w',newline='',encoding='utf-8') as pd, (out/'track_states.csv').open('w',newline='',encoding='utf-8') as ts:
+        with (out/'detections.csv').open('w',newline='',encoding='utf-8') as f, (out/'ball_candidates.csv').open('w',newline='',encoding='utf-8') as b, (out/'id_changes.csv').open('w',newline='',encoding='utf-8') as e, (out/'ball_track.csv').open('w',newline='',encoding='utf-8') as t, (out/'raw_detections.csv').open('w',newline='',encoding='utf-8') as rd, (out/'player_diagnostics.csv').open('w',newline='',encoding='utf-8') as pd, (out/'track_states.csv').open('w',newline='',encoding='utf-8') as ts, (out/'ball_evidence.csv').open('w',newline='',encoding='utf-8') as be:
             csvw,bw,ew,tw = csv.writer(f),csv.writer(b),csv.writer(e),csv.writer(t)
             csvw.writerow(['frame','time_s','track_id','class_name','confidence','x1','y1','x2','y2','foot_x','foot_y','object_type','jersey_l','jersey_a','jersey_b','scene_id','pitch_x_m','pitch_y_m','tracking_state'])
             bw.writerow(['frame','confidence','x1','y1','x2','y2','ball_id','status','white_marking_cue','scene_id','background_marking_fraction','foreground_fraction','innovation_px'])
@@ -132,6 +133,9 @@ def main():
             raw_writer.writerow(RAW_FIELDS)
             person_diag.writerow(['frame','time_s','scene_id','raw_persons','outside_pitch','associated','low_conf_associated','unassigned','predicted'])
             state_writer.writerow(['frame','time_s','scene_id','object_type','track_id','state','age_frames','confidence','x1','y1','x2','y2'])
+            evidence_writer = csv.writer(be)
+            evidence_writer.writerow(EVIDENCE_FIELDS)
+            timeline = []
             raw_count = 0
             low_recoveries,unassigned_count,prediction_count,crop_passes = 0,0,0,0
             frame = 0
@@ -149,6 +153,7 @@ def main():
                     player_tracker = PlayerTracker(config,args.conf,args.label_hold)
                 geometry = geometries.get(scene_id)
                 processed += 1
+                timeline.append(dict(frame=frame,scene_id=scene_id,time_s=round(frame/fps,4)))
                 observations = detector.detect(img,frame,frame/fps,scene_id,args.person_det_conf,args.ball_conf,args.imgsz)
                 person_observations = [d for d in observations if d.is_person]
                 ball_observations = [d for d in observations if not d.is_person]
@@ -183,6 +188,8 @@ def main():
                 raw_candidates += len(candidates)
                 if args.ball_mode == 'pitch':
                     accepted = ball_tracker.update(frame,candidates,img,backgrounds[scene_id],geometry,[d.box for d in person_observations])
+                    evidence_writer.writerows(evidence_row(frame,scene_id,i,row)
+                                               for i,row in enumerate(ball_tracker.last_evidence))
                     for diagnostic in ball_tracker.last_diagnostics:
                         status = diagnostic['status']
                         candidate_statuses[status] = candidate_statuses.get(status,0)+1
@@ -241,8 +248,15 @@ def main():
         (out/'summary.json').write_text(json.dumps(summary,indent=2),encoding='utf-8')
         metadata = dict(schema_version=1,record_kind='raw_model_observations',source_video=str(Path(args.video).resolve()),
                         fps=fps,image_size=list(size),frame_count=frame,stride=args.stride,scenes=scenes,
-                        person_det_conf=args.person_det_conf,ball_conf=args.ball_conf)
+                        person_det_conf=args.person_det_conf,ball_conf=args.ball_conf,
+                        detector=detector.provenance())
         (out/'raw_detections.meta.json').write_text(json.dumps(metadata,indent=2),encoding='utf-8')
+        if args.ball_mode == 'pitch':
+            references = {str(s):dict(background_sha256=sha256_file(out/'pitch_context'/f'scene_{s:03d}_background.png'))
+                          for s in backgrounds}
+            write_metadata(out/'ball_evidence.meta.json',metadata,vars(args),timeline,references,
+                           dict(kind='online_full_precision',detector=metadata['detector'],
+                                geometry_sha256=sha256_file(args.camera_config) if args.camera_config else None))
         print(json.dumps(summary,indent=2))
     finally:
         cap.release()

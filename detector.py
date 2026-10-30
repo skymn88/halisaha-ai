@@ -11,6 +11,17 @@ class YoloDetector:
         if not self.person_classes or (ball_enabled and not self.ball_classes):
             raise ValueError('Model needs person class and, when enabled, sports ball class')
         self.ball_enabled = ball_enabled
+        self.weights = str(weights)
+
+    def provenance(self):
+        """Record the actual available artifact, implementation and temporal context."""
+        from importlib.metadata import version
+        from pathlib import Path
+        from ball_cache import sha256_file
+        path = Path(getattr(self.model, 'ckpt_path', None) or self.weights)
+        return dict(implementation='ultralytics.YOLO', package_version=version('ultralytics'),
+                    weights=str(path), weights_sha256=sha256_file(path) if path.is_file() else None,
+                    previous_frames=0, future_frames=0)
 
     def detect(self, image, frame, time_s, scene_id, person_conf, ball_conf, imgsz):
         classes = self.person_classes+(self.ball_classes if self.ball_enabled else [])
