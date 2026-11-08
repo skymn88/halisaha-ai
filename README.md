@@ -124,3 +124,12 @@ piksel hareketi ve tıklanabilir olay zaman çizelgesiyle tek HTML olarak sunar.
 Pilot kale/aut bölgeleri AI incelemesidir ve video SHA-256 ile sınırlandırılmıştır;
 genel otomatik kale başarısı veya insan etiketi sayılmaz. Detaylar ve tamamlanmamış
 özellikler: `reports/v05_integrated_prototype.md`.
+
+### Betiksiz gezinme ve şematik ısı haritası (v0.5.1)
+
+`python product_report.py` artık `results/halisaha-analiz-v051.html` üretir.
+Kesit bağlantıları ve doğrudan görünen ısı haritaları JavaScript gerektirmez.
+45×25 m örnek saha çizimi internet kaynaklarına dayalı görselleştirme şablonudur;
+videodaki sahanın ölçüldüğü anlamına gelmez. Görünen alanın yaklaşık dönüşümü,
+dışarıda kalan gözlem sayıları ve kaynaklar raporda açıklanır. Ayrıntılar:
+`reports/v051_heatmap_navigation.md`.
