@@ -103,3 +103,13 @@ sistemde `ffmpeg` bulunmalıdır. Gerçek oyuncu sayısı, onaylı olay veya rey
 Küçük açık renkli hareketli bölgeleri ayrı CSV ve videoya çıkarır. Çıktılar top
 olasılığı veya kabul edilmiş top değildir. Ana takip hattına otomatik bağlanmaz.
 Ayrıntılar ve bilinen başarısızlıklar: `reports/v043_white_motion.md`.
+
+### Oyuncu örtüşmesi ve genişletilmiş rapor (v0.4.4)
+
+`python player_ball_filter.py --scene results/scene_clips/scene_000.mp4`
+
+Mevcut kişi ve beyaz-aday önbelleklerini kullanır; gövdede üç ardışık kare kalan
+adayları gerekçesiyle bastırır. Ayak çevresi korunur. `python progress_report.py`
+ile video, yoğunluk haritası, geçici izlerin piksel hareketi ve yerel kale/aut
+çizgisi taslak aracı içeren tek HTML üretilir. Çizgi taslakları henüz olay hesabına
+bağlı değildir. Ayrıntılar: `reports/v044_player_overlap.md`.
