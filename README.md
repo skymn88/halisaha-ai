@@ -95,3 +95,11 @@ videoları, görüntü koordinatlarında kişi gözlem yoğunluğunu, top gözle
 ve doğrulanmamış kontrol sürelerini tek HTML içine yerleştirir. H.264 dönüşümü için
 sistemde `ffmpeg` bulunmalıdır. Gerçek oyuncu sayısı, onaylı olay veya reyting
 ürettiği varsayılmamalıdır; ayrıntılar `reports/v042_measurements.md` içindedir.
+
+### Beyaz hareket deneyi (v0.4.3)
+
+`python motion_ball.py --video results/scene_clips/scene_000.mp4 --output results/experiment_new --grass-context`
+
+Küçük açık renkli hareketli bölgeleri ayrı CSV ve videoya çıkarır. Çıktılar top
+olasılığı veya kabul edilmiş top değildir. Ana takip hattına otomatik bağlanmaz.
+Ayrıntılar ve bilinen başarısızlıklar: `reports/v043_white_motion.md`.
