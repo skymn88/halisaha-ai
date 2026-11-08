@@ -85,3 +85,13 @@ Tarihçe: [v0.1–v0.3.1 eski README](reports/history_v01_v031.md), [v0.3](repor
 Kaydetme ile “Bu kareyi inceledim” ayrı eylemlerdir. Bekleyen öneriler gerçek
 etiket olarak yazılmaz. Yakınlaştırma, ok tuşları, Delete ve S kısayolları vardır.
 Güncel kapsam ve test sınırları: `reports/v041_ui_validation.md`.
+
+### Kesit başına ölçüm raporu
+
+`python measured_report.py --runs results/measured --manifest results/scene_clips/manifest.json --output results/olcum-raporu.html`
+
+Bu komut her kesitin mevcut takip önbelleğini kullanır, YOLO çalıştırmaz. İşaretli
+videoları, görüntü koordinatlarında kişi gözlem yoğunluğunu, top gözlem kapsamını
+ve doğrulanmamış kontrol sürelerini tek HTML içine yerleştirir. H.264 dönüşümü için
+sistemde `ffmpeg` bulunmalıdır. Gerçek oyuncu sayısı, onaylı olay veya reyting
+ürettiği varsayılmamalıdır; ayrıntılar `reports/v042_measurements.md` içindedir.
