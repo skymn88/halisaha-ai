@@ -78,3 +78,10 @@ Vaat: **“İncelenen görüntülerde N onaylı pas; şu aralıklar belirsiz.”
 Tarayıcı görsel kontrolü uygulama erişimi zaman aşımı nedeniyle tamamlanamadı. HTTP/API ve sentetik kayıt davranışı test edildi; sürükleme ve tarayıcı oynatımı kullanıcı tarafından gözden geçirilmeli.
 
 Tarihçe: [v0.1–v0.3.1 eski README](reports/history_v01_v031.md), [v0.3](reports/v03_validation.md), [v0.3.1](reports/v031_validation.md). Rutin geliştirmede uzun montaj yerine `results/scene_clips/` ve manifestini kullan; yeni koşuda boş çıktı klasörü seç.
+
+### İnceleme arayüzü çalışma notu
+
+Öneriler arayüzde incelenmemiş başlar; numaralı top düğmesi yalnız bir topu seçer.
+Kaydetme ile “Bu kareyi inceledim” ayrı eylemlerdir. Bekleyen öneriler gerçek
+etiket olarak yazılmaz. Yakınlaştırma, ok tuşları, Delete ve S kısayolları vardır.
+Güncel kapsam ve test sınırları: `reports/v041_ui_validation.md`.

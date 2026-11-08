@@ -65,6 +65,11 @@ class ReviewStore:
             record = frames[0]
         if not detections and record['review_status'] == 'unreviewed':
             detections = [dict(row) for row in self.proposals[window['source_id']].get(frame, [])]
+        # Omitted suggestions remain available, without becoming saved labels.
+        existing_ids = {r['annotation_id'] for r in detections}
+        for proposal in self.proposals[window['source_id']].get(frame, []):
+            if proposal['annotation_id'] not in existing_ids:
+                detections.append(dict(proposal, ui_pending=True))
         for row in detections:
             row.update({k: v for k, v in identity.get(row['annotation_id'], {}).items()
                         if k in ('identity_id', 'team_id', 'role', 'track_hint')})
