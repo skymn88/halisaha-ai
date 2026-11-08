@@ -1,0 +1,706 @@
+{
+  "schema_version": 1,
+  "scenes": {
+    "scene_000": {
+      "video_sha256": "05d4437b4759c9b8c67cb8697d3b3c6d78fa53afc62af04d602a2e345c0cf83e",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              5,
+              104
+            ],
+            [
+              22,
+              132
+            ],
+            [
+              48,
+              258
+            ],
+            [
+              24,
+              243
+            ]
+          ],
+          "mouth_line": [
+            [
+              24,
+              243
+            ],
+            [
+              48,
+              258
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            5,
+            104
+          ],
+          [
+            79,
+            359
+          ]
+        ]
+      ]
+    },
+    "scene_001": {
+      "video_sha256": "0b1972ca54076504751cde8f0fa76b0ffadb0a7a586bc6cb1317b156a2784837",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              95,
+              24
+            ],
+            [
+              134,
+              16
+            ],
+            [
+              134,
+              36
+            ],
+            [
+              96,
+              44
+            ]
+          ],
+          "mouth_line": [
+            [
+              96,
+              44
+            ],
+            [
+              134,
+              36
+            ]
+          ],
+          "status": "ai_reviewed_approximate_goal_region",
+          "partial": false
+        },
+        {
+          "polygon": [
+            [
+              622,
+              157
+            ],
+            [
+              634,
+              170
+            ],
+            [
+              605,
+              284
+            ],
+            [
+              562,
+              280
+            ]
+          ],
+          "mouth_line": [
+            [
+              562,
+              280
+            ],
+            [
+              605,
+              284
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            624,
+            153
+          ],
+          [
+            543,
+            359
+          ]
+        ]
+      ]
+    },
+    "scene_002": {
+      "video_sha256": "a1eee8ae62931fec7d0448b909071e93b45f5e9d8c726e8b93316e395e874087",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              88,
+              38
+            ],
+            [
+              125,
+              29
+            ],
+            [
+              126,
+              46
+            ],
+            [
+              89,
+              55
+            ]
+          ],
+          "mouth_line": [
+            [
+              89,
+              55
+            ],
+            [
+              126,
+              46
+            ]
+          ],
+          "status": "ai_reviewed_approximate_goal_region",
+          "partial": false
+        },
+        {
+          "polygon": [
+            [
+              627,
+              146
+            ],
+            [
+              638,
+              164
+            ],
+            [
+              606,
+              264
+            ],
+            [
+              584,
+              251
+            ]
+          ],
+          "mouth_line": [
+            [
+              584,
+              251
+            ],
+            [
+              606,
+              264
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            627,
+            136
+          ],
+          [
+            526,
+            359
+          ]
+        ]
+      ]
+    },
+    "scene_003": {
+      "video_sha256": "023021218edcfd94c36a8fb752872d020ffa6cd0feb84ea50339db6b0b58eb67",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              65,
+              113
+            ],
+            [
+              100,
+              108
+            ],
+            [
+              101,
+              128
+            ],
+            [
+              66,
+              133
+            ]
+          ],
+          "mouth_line": [
+            [
+              66,
+              133
+            ],
+            [
+              101,
+              128
+            ]
+          ],
+          "status": "ai_reviewed_approximate_goal_region",
+          "partial": false
+        },
+        {
+          "polygon": [
+            [
+              620,
+              164
+            ],
+            [
+              636,
+              174
+            ],
+            [
+              615,
+              267
+            ],
+            [
+              599,
+              259
+            ]
+          ],
+          "mouth_line": [
+            [
+              599,
+              259
+            ],
+            [
+              615,
+              267
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            621,
+            163
+          ],
+          [
+            561,
+            359
+          ]
+        ]
+      ]
+    },
+    "scene_004": {
+      "video_sha256": "a235ec39a7049bb1631b2d3b291eca54b74230aa64f8019073a5a8c83da4652d",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              28,
+              42
+            ],
+            [
+              52,
+              32
+            ],
+            [
+              55,
+              51
+            ],
+            [
+              30,
+              60
+            ]
+          ],
+          "mouth_line": [
+            [
+              30,
+              60
+            ],
+            [
+              55,
+              51
+            ]
+          ],
+          "status": "ai_reviewed_approximate_goal_region",
+          "partial": false
+        },
+        {
+          "polygon": [
+            [
+              610,
+              161
+            ],
+            [
+              623,
+              174
+            ],
+            [
+              600,
+              256
+            ],
+            [
+              572,
+              246
+            ]
+          ],
+          "mouth_line": [
+            [
+              572,
+              246
+            ],
+            [
+              600,
+              256
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            620,
+            141
+          ],
+          [
+            544,
+            359
+          ]
+        ]
+      ]
+    },
+    "scene_005": {
+      "video_sha256": "079a485fe32cd0ab7b3197dc7dfcfb679fab89c34c9d0f6b0cb26fe738ac8681",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              72,
+              75
+            ],
+            [
+              105,
+              62
+            ],
+            [
+              106,
+              84
+            ],
+            [
+              74,
+              94
+            ]
+          ],
+          "mouth_line": [
+            [
+              74,
+              94
+            ],
+            [
+              106,
+              84
+            ]
+          ],
+          "status": "ai_reviewed_approximate_goal_region",
+          "partial": false
+        },
+        {
+          "polygon": [
+            [
+              618,
+              141
+            ],
+            [
+              637,
+              155
+            ],
+            [
+              613,
+              256
+            ],
+            [
+              588,
+              249
+            ]
+          ],
+          "mouth_line": [
+            [
+              588,
+              249
+            ],
+            [
+              613,
+              256
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            629,
+            127
+          ],
+          [
+            530,
+            359
+          ]
+        ]
+      ]
+    },
+    "scene_006": {
+      "video_sha256": "c190ae99fa95fc440aae0148a36416df0f9526291264988e16c9d594097ffb8a",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              612,
+              159
+            ],
+            [
+              627,
+              171
+            ],
+            [
+              607,
+              250
+            ],
+            [
+              585,
+              244
+            ]
+          ],
+          "mouth_line": [
+            [
+              585,
+              244
+            ],
+            [
+              607,
+              250
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            615,
+            157
+          ],
+          [
+            535,
+            359
+          ]
+        ]
+      ]
+    },
+    "scene_007": {
+      "video_sha256": "3081af6f78d13d6e1095d06521463b7d5d236218b9ec4627863aa0e477e1bef2",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              91,
+              39
+            ],
+            [
+              125,
+              29
+            ],
+            [
+              127,
+              49
+            ],
+            [
+              93,
+              60
+            ]
+          ],
+          "mouth_line": [
+            [
+              93,
+              60
+            ],
+            [
+              127,
+              49
+            ]
+          ],
+          "status": "ai_reviewed_approximate_goal_region",
+          "partial": false
+        },
+        {
+          "polygon": [
+            [
+              615,
+              100
+            ],
+            [
+              628,
+              113
+            ],
+            [
+              612,
+              203
+            ],
+            [
+              594,
+              196
+            ]
+          ],
+          "mouth_line": [
+            [
+              594,
+              196
+            ],
+            [
+              612,
+              203
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            620,
+            99
+          ],
+          [
+            519,
+            359
+          ]
+        ]
+      ]
+    },
+    "scene_008": {
+      "video_sha256": "8a66a6d530e29245f83e4daa2388636da0770ad4e6fd8c60b25ad2aaae28f341",
+      "annotation_source": "ai_reviewed",
+      "reviewer": "assistant_visual_review",
+      "reference": "per-clip median background inspected in this session",
+      "uncertainty": "approximate pixels; near goals partly cropped; no independent calibration",
+      "goals": [
+        {
+          "polygon": [
+            [
+              514,
+              32
+            ],
+            [
+              553,
+              42
+            ],
+            [
+              552,
+              68
+            ],
+            [
+              515,
+              58
+            ]
+          ],
+          "mouth_line": [
+            [
+              515,
+              58
+            ],
+            [
+              552,
+              68
+            ]
+          ],
+          "status": "ai_reviewed_approximate_goal_region",
+          "partial": false
+        },
+        {
+          "polygon": [
+            [
+              0,
+              126
+            ],
+            [
+              12,
+              139
+            ],
+            [
+              34,
+              229
+            ],
+            [
+              15,
+              232
+            ]
+          ],
+          "mouth_line": [
+            [
+              15,
+              232
+            ],
+            [
+              34,
+              229
+            ]
+          ],
+          "status": "ai_reviewed_approximate_partial_goal_region",
+          "partial": true
+        }
+      ],
+      "endlines": [
+        [
+          [
+            5,
+            107
+          ],
+          [
+            91,
+            359
+          ]
+        ]
+      ]
+    }
+  }
+}

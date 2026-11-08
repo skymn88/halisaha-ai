@@ -113,3 +113,14 @@ adayları gerekçesiyle bastırır. Ayak çevresi korunur. `python progress_repo
 ile video, yoğunluk haritası, geçici izlerin piksel hareketi ve yerel kale/aut
 çizgisi taslak aracı içeren tek HTML üretilir. Çizgi taslakları henüz olay hesabına
 bağlı değildir. Ayrıntılar: `reports/v044_player_overlap.md`.
+
+### Birleşik analiz prototipi (v0.5)
+
+`python scene_analytics.py` mevcut dokuz kesitin kişi/top önbelleklerini kullanır.
+Otomatik saha/çizgi önerileri, kişi kutusunda anlık top eleme, sabit işaret reddi
+ve olay adayları üretir. `python product_report.py` bunları video, ısı haritası,
+piksel hareketi ve tıklanabilir olay zaman çizelgesiyle tek HTML olarak sunar.
+
+Pilot kale/aut bölgeleri AI incelemesidir ve video SHA-256 ile sınırlandırılmıştır;
+genel otomatik kale başarısı veya insan etiketi sayılmaz. Detaylar ve tamamlanmamış
+özellikler: `reports/v05_integrated_prototype.md`.
