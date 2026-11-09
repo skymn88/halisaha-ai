@@ -1,0 +1,21 @@
+{
+  "version": "0.6.0-frozen-2",
+  "reference_threshold": 8.0,
+  "association_gap_s": 0.4,
+  "control_enter_s": 0.15,
+  "control_radius_heights": 0.6,
+  "event_window_s": 2.0,
+  "travel_heights": 0.5,
+  "fast_heights_per_s": 3.0,
+  "direction_consistency": 0.65,
+  "goal_margin_heights": 0.25,
+  "goal_half_radius_heights": 6.0,
+  "candidate_displacement_heights": 0.08,
+  "body_residual_heights": 0.06,
+  "body_motion_correlation": 0.85,
+  "body_min_observations": 4,
+  "foot_zone_fraction": 0.75,
+  "max_size_heights": 0.4,
+  "skin_fraction_penalty": 0.45,
+  "event_cooldown_s": 0.7
+}

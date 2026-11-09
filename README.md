@@ -147,3 +147,9 @@ elenir. `--motion-blur` yalnız deney içindir, teslim edilen raporda kapalıdı
 Kısmi kalelerde eksik direk uydurulmaz. Şut adayı için oyuncudan ayrılma ve hızlı,
 gözlenen çizgi geçişi gerekir; kaçırılan uçuşlar hâlâ şut kaybına neden olur.
 Karşılaştırma ve sınırlar: `reports/v052_motion_consistency.md`.
+
+### v0.6 — cached hypotheses and reviewed geometry
+
+The new `review_pipeline_v06.py` keeps alternative observed ball trajectories and contact frames, exports body/appearance evidence, and separates stronger/weaker **unreviewed** event hypotheses. Automatic geometry is disabled for inference by default; named human geometry is clip-hash bound and can be replayed without detector inference. `review_report_v06.py` produces a portable mobile HTML with all nine scene videos, unchanged approximate person heatmaps, AI timing comparisons and editable geometry.
+
+Validation: 94 tests; Chromium mobile JS on/off scene and heatmap checks, video/seek and geometry download tests. AI temporal window coverage is 1/9 → 3/9, with 88 review proposals and **still zero shot candidates**. This is not an accuracy improvement claim; human labels remain zero and false-alarm rate is unknown. See [workflow](docs/review_v06.md) and [measured results and limitations](reports/v06_validation.md).
