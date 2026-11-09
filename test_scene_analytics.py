@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from auto_pitch import infer_geometry
-from scene_analytics import inside_person,crossing
+from scene_analytics import inside_person,crossing,shot_exit
 
 class AnalyticsTests(unittest.TestCase):
     def test_any_person_overlap_removed_without_history(self):
@@ -21,3 +21,11 @@ class AnalyticsTests(unittest.TestCase):
         g=infer_geometry(im)
         self.assertTrue(g['pitch_polygon']);self.assertFalse(g['metric_calibration'])
         self.assertEqual(g['review_status'],'unreviewed')
+
+    def test_shot_needs_departure_speed_and_actual_crossing(self):
+        history=[dict(frame=i,x=10+10*i,y=20) for i in range(3)]
+        line=[[25,0],[25,40]]
+        self.assertTrue(shot_exit(history,30,('player',0),line))
+        self.assertFalse(shot_exit(history,30,None,line))
+        self.assertFalse(shot_exit(history,30,('player',0),[[40,0],[40,40]]))
+        self.assertFalse(shot_exit(history,1,('player',0),line))

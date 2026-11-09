@@ -34,9 +34,12 @@ def density_for_scene(root):
     quad=visible_quad(geometry['pitch_polygon'])
     destination=np.array([[0,0],[1,0],[1,1],[0,1]],np.float32)
     transform=cv2.getPerspectiveTransform(quad,destination)
-    points=[]
+    points=[];reference_excluded=0
+    unevaluable=set(geometry.get('unevaluable_frames',[]))
     for row in read(Path('results/measured')/root.name/'detections.csv'):
-        if row['class_name']=='person':points.append([float(row['foot_x']),float(row['foot_y'])])
+        if row['class_name']=='person':
+            if int(row['frame']) in unevaluable:reference_excluded+=1;continue
+            points.append([float(row['foot_x']),float(row['foot_y'])])
     mapped=cv2.perspectiveTransform(np.asarray(points,np.float32).reshape(-1,1,2),transform).reshape(-1,2) if points else np.empty((0,2))
     valid=np.isfinite(mapped).all(axis=1)&(mapped>=0).all(axis=1)&(mapped<=1).all(axis=1)
     mapped=mapped[valid]
@@ -47,8 +50,8 @@ def density_for_scene(root):
     if smoothed.sum()>0:smoothed/=smoothed.sum()
     audit=dict(template_length_m=TEMPLATE_LENGTH,template_width_m=TEMPLATE_WIDTH,dimensions_measured=False,
                method='visible-hull quadrilateral normalized to a schematic; not verified full-pitch homography',
-               source_quad=quad.tolist(),transform=transform.tolist(),input_observations=len(points),
-               mapped_observations=int(valid.sum()),excluded_observations=int((~valid).sum()),
+               source_quad=quad.tolist(),transform=transform.tolist(),input_observations=len(points)+reference_excluded,reference_excluded_observations=reference_excluded,
+               mapped_observations=int(valid.sum()),excluded_observations=int((~valid).sum())+reference_excluded,
                observed_person_seconds=float(grid.sum()),metric_calibration_valid=False,
                orientation='image-relative; attacking direction and full-field orientation unknown',
                color_scale='per-scene maximum; colors compare locations within a clip, not activity between clips',sources=SOURCE_URLS)
@@ -84,9 +87,9 @@ def render(grid,maximum):
     return image
 
 
-def export():
+def export(analysis_root="results/full_analysis"):
     scenes=[]
-    for root in sorted(p for p in Path('results/full_analysis').glob('scene_*') if p.is_dir()):
+    for root in sorted(p for p in Path(analysis_root).glob('scene_*') if p.is_dir()):
         grid,audit=density_for_scene(root);scenes.append((root,grid,audit))
     for root,grid,audit in scenes:
         maximum=float(grid.max())

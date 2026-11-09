@@ -133,3 +133,17 @@ Kesit bağlantıları ve doğrudan görünen ısı haritaları JavaScript gerekt
 videodaki sahanın ölçüldüğü anlamına gelmez. Görünen alanın yaklaşık dönüşümü,
 dışarıda kalan gözlem sayıları ve kaynaklar raporda açıklanır. Ayrıntılar:
 `reports/v051_heatmap_navigation.md`.
+
+### Hareket ve boyut sürekliliği (v0.5.2)
+
+`python scene_analytics.py --output-root results/my_motion_run`
+
+Yeni ve boş çıktı dizini kullanılır. Top seçimi en az üç gerçek gözlem, tutarlı
+hareket/yön ve boyut sürekliliği ister; durağan noktalar ve kişi kutusu içleri
+elenir. `--motion-blur` yalnız deney içindir, teslim edilen raporda kapalıdır.
+
+`python product_report.py --analysis-root results/my_motion_run --output results/my_motion_report.html`
+
+Kısmi kalelerde eksik direk uydurulmaz. Şut adayı için oyuncudan ayrılma ve hızlı,
+gözlenen çizgi geçişi gerekir; kaçırılan uçuşlar hâlâ şut kaybına neden olur.
+Karşılaştırma ve sınırlar: `reports/v052_motion_consistency.md`.

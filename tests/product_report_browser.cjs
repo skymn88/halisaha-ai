@@ -1,11 +1,13 @@
 const {chromium}=require('playwright');
 const fs=require('fs'),path=require('path');
+const report=process.env.REPORT_PATH||'results/halisaha-analiz-v051.html';
+const tag=path.basename(report,'.html');
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
  for(const javascript of [false,true]){
   const context=await browser.newContext({javaScriptEnabled:javascript,viewport:{width:390,height:844}});
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.route('http://localhost:8888/**',r=>r.fulfill({contentType:'text/html',body:fs.readFileSync(path.resolve('results/halisaha-analiz-v051.html'))}));
+  await page.route('http://localhost:8888/**',r=>r.fulfill({contentType:'text/html',body:fs.readFileSync(path.resolve(report))}));
   await page.goto('http://localhost:8888/');
   if(await page.locator('section:visible').count()!==9)throw Error('Not all scenes accessible');
   if(await page.locator('.heatmap:visible').count()!==9)throw Error('Heatmaps hidden');
@@ -29,8 +31,8 @@ const fs=require('fs'),path=require('path');
    }
   }
   await page.locator('#contents a').nth(1).click();
-  await page.screenshot({path:path.resolve('results/browser/v051-mobile-'+javascript+'.png')});
-  if(javascript){await page.setViewportSize({width:1440,height:1000});await page.locator('#scene-1').screenshot({path:path.resolve('results/browser/v051-desktop.png')})}
+  await page.screenshot({path:path.resolve('results/browser/'+tag+'-mobile-'+javascript+'.png')});
+  if(javascript){await page.setViewportSize({width:1440,height:1000});await page.locator('#scene-1').screenshot({path:path.resolve('results/browser/'+tag+'-desktop.png')})}
   if(errors.length)throw Error(errors.join('\n'));
   console.log(`JS ${javascript}: 9 scene links, 9 heatmap links, visible images passed`);
   await context.close();
