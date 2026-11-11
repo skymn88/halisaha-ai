@@ -184,3 +184,7 @@ The same 396 ball candidates yield 52 accepted observations under checkpoint b4b
 - CSV-only legacy and full precision replay both match all saved 396 candidate decisions and 450 states (54 accepts). This is operational parity, not accuracy. Existing short-run person cache remains 75 scene-scoped IDs / 11 spatial hints; no person tracker logic changed.
 - See `docs/review_workflow.md`, `docs/detector_options.md` and `reports/v04_validation.md`. No new model, dependency or license was selected. The owner explicitly requested committing and pushing this checkpoint after reviewing the implementation report. No labeled candidate-miss evidence exists to trigger alternate-detector comparison.
 - Browser visual QA timed out at app access; HTTP/storage/synthetic tests do not prove pointer interaction or video playback works. User should review these before relying on the UI.
+
+## v0.6.1 logic-fix checkpoint (Claude)
+
+Read `docs/v061_changes.md` first: it explains the `directed_to_goal` fix, the possession-gap fix, the review-only `shot_direction_review` type, the optional held-out `pitch_calibration` contract and the remaining gaps. The owner explicitly asked for these changes to be committed and pushed to `feature/tracking-v02`; this is not blanket authorization for future changes. No real footage, cache or detector was re-run for this checkpoint, so do not cite it as an accuracy improvement. New tests: `test_shot_logic_v061.py`, `test_pitch_calibration_v061.py`.

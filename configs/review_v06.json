@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0-frozen-2",
+  "version": "0.6.1-logic-fix-1",
   "reference_threshold": 8.0,
   "association_gap_s": 0.4,
   "control_enter_s": 0.15,
